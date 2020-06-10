@@ -8,6 +8,10 @@ Created on Wed Jun 10 15:13:01 2020
 import numpy as np
 import matplotlib.pyplot as plt
 
+# uncomment the following lines to change your plotting settings:
+#from matplotlib import rc
+#rc('font',**{'family':'serif','serif':['Computer Modern Roman']})
+#rc('text',usetex=True)
 
 boundFcn = lambda e : 1/(1+np.floor(e/2)/2)
 boundFcn = np.vectorize(boundFcn)
@@ -23,5 +27,10 @@ plt.plot(eeFine,ones)
 plt.fill_between(eeFine,ones,Qbound,color='red',alpha=0.2)
 plt.ylim([0,1.1])
 plt.scatter(ee,boundFcn(ee))
-plt.xticks(fontsize=18)
-plt.yticks(fontsize=18)
+
+sz = 18
+plt.xticks(fontsize=sz)
+plt.yticks(fontsize=sz)
+
+plt.xlabel(r'$e({\cal D})$',fontsize=sz)
+plt.ylabel(r'$Q\left(f_{\rm max};{\cal G}^{\rm sm},{\cal N}\right)$',fontsize=sz)
