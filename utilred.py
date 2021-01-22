@@ -103,7 +103,7 @@ class Game :
         current_location = self.agents[i].location
         self.agents[i].location = loc
         # irrelevant = set() #
-        irrelevant = self.get_irrelevant_agents(i,loc)
+        irrelevant = self.get_irrelevant_agents(i,loc).union(self.agents[i].blindspots)
         # print(i)
         # print(irrelevant)
         U = self.W(irrelevant) - self.W(irrelevant.union({i})) # marginal contribution
@@ -213,11 +213,18 @@ class Game :
         
         
 if __name__ == "__main__" :
-    numSteps = 100
-    game = Game(5,3,100,40,4,seed=0)
+    numSteps = 10000
+    game = Game(15,15,100,20,4,seed=0)
     game.plotObjective2d()
-    game.best_response_run(numSteps)
+    game.best_response_run(100) # may be long enough to reach Nash
     game.plotObjective2d(True,True)
+    for i in range(game.n) :
+        for j in range(i) :
+            game.agents[j].blindspots.add(i) # add some random comm fails
+        game.agents[i].blindspots.difference_update({i}) # make sure we aren't commailed to ourself
+    game.best_response_run(3) # BR for a while
+    game.better_reply_run(1000,True)
+    game.plotObjective2d(True,True,13)
     game.plotWhist()
         
 # bigger game:
