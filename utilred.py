@@ -12,7 +12,8 @@ import numpy as np
 import numpy.random as rnd
 
 class Agent :
-    def __init__(self,blindspots) :
+    def __init__(self,index,blindspots) :
+        self.index = index
         self.blindspots = blindspots
         self.location = [0,0]
 
@@ -26,7 +27,7 @@ class Game :
         self.n = n
         self.k = k
         self.points = points
-        self.agents = [Agent(set()) for i in range(n)]
+        self.agents = [Agent(i,set()) for i in range(n)]
         self.agentRadius = agentRadius
         self.objective_arr = np.zeros([points,points])
         self.peaks = []
@@ -114,9 +115,37 @@ class Game :
         best_utility = self.utility(i,(0,0))
         for x in range(1,self.points) :
             for y in range(0,self.points) :
-                if self.utility(i,(x,y)) > best_utility :
+                util = self.utility(i,(x,y))
+                if util > best_utility :
                     best_seen = (x,y)
+                    best_utility = util
         return best_seen
+    
+    def best_response_step(self,i) :
+        # moves agent to an arbitrary location in its best response set.
+        # If agent moves, return True.
+        currentLoc = self.agents[i].location
+        best = self.best_response(i)
+        if best == currentLoc :
+            return False
+        else :
+            self.agents[i].location = best
+            return True
+        
+    def best_response_run(self,numSteps=2) :
+        # numSteps is max iterations thru agent list
+        # returns True if converged to Nash NASH LOGIC CURRENTLY BROKEN
+        # returns False if not Nash
+        for t in range(numSteps) :
+            Nash = True  # maybe we're at Nash?
+            for i,agent in enumerate(self.agents) :
+                print('agent '+str(i))
+                moved = self.best_response_step(i)
+                Nash = Nash and not moved # if someone moves, we weren't at Nash
+                self.W_history.append(self.W())
+            if Nash:
+                return Nash # still true if everybody didn't move
+        return Nash
     
     def better_reply_step(self,i,loc) :
         # checks utility at new location; if an improvement, move
@@ -127,6 +156,7 @@ class Game :
             self.agents[i].location = loc
             return True
         return False
+    
             
     def better_reply_run(self,numSteps=1000,localsearch=False) :
         # one step cycles through all agents
@@ -156,8 +186,9 @@ class Game :
         ax = fig.gca(projection='3d')
         ax.plot_surface(X,Y,self.objective_arr,cmap=cm.coolwarm)
     
-    def plotObjective2d(self,agents=False,fignum=12) :
+    def plotObjective2d(self,agents=False,annot=False,fignum=12) :
         # if agents=True, then each agent is represented by a box showing it sensing radius
+        # if annot=True, then the agent index is printed on the box
         x = np.arange(0,self.points)
         y = x.copy()
         X,Y = np.meshgrid(x,y)
@@ -172,15 +203,28 @@ class Game :
                 rect = patches.Rectangle(xy, self.agentRadius*2, self.agentRadius*2,
                                          edgecolor='white',facecolor='none',lw=1)
                 ax.add_patch(rect)
+                if annot:
+                    xy = (agent.location[1],agent.location[0])
+                    ax.annotate(str(agent.index),xy=xy)
     
     def plotWhist(self,fignum=17) :
         plt.figure(17)
         plt.plot(self.W_history)
         
+        
 if __name__ == "__main__" :
     numSteps = 100
-    game = Game(10,5,200,80,8,seed=2)
+    game = Game(5,3,100,40,4,seed=0)
     game.plotObjective2d()
-    game.better_reply_run(numSteps,True)
-    game.plotObjective2d(True)
+    game.best_response_run(numSteps)
+    game.plotObjective2d(True,True)
     game.plotWhist()
+        
+# bigger game:
+# if __name__ == "__main__" :
+#     numSteps = 100
+#     game = Game(10,5,200,80,8,seed=2)
+#     game.plotObjective2d()
+#     game.better_reply_run(numSteps,True)
+#     game.plotObjective2d(True,True)
+#     game.plotWhist()
